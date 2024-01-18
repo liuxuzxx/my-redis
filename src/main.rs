@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use mini_redis::{Connection, Frame};
 use tokio::net::{TcpListener, TcpStream};
 
@@ -8,12 +10,16 @@ async fn main() {
     let listener = TcpListener::bind(addr).await.unwrap();
     loop {
         let (socket, _) = listener.accept().await.unwrap();
-        process(socket).await;
+        tokio::spawn(async move {
+            process(socket).await;
+        });
     }
 }
 
 async fn process(socket: TcpStream) {
     let mut connection = Connection::new(socket);
+
+    let mut db: HashMap<String, String> = HashMap::new();
 
     if let Some(frame) = connection.read_frame().await.unwrap() {
         println!("Get :{:?}", frame);
